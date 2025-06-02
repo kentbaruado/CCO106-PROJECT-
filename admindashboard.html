@@ -1,0 +1,755 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Admin Dashboard</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <style>
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      font-family: 'Inter', sans-serif;
+      background: url('Chain.jpg') no-repeat center center fixed;
+      background-size: cover;
+      color: white;
+    }
+
+    header {
+      background-color: #1e293b;
+      padding: 15px 40px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .nav-links {
+      display: flex;
+      gap: 25px;
+    }
+
+    .nav-links a {
+      text-decoration: none;
+      color: #38bdf8;
+      font-weight: 600;
+    }
+
+    .logout-btn {
+      background-color: #f97316;
+      color: white;
+      border: none;
+      padding: 10px 18px;
+      border-radius: 10px;
+      cursor: pointer;
+      font-weight: 600;
+    }
+
+    .dashboard {
+      max-width: 1200px;
+      margin: 40px auto;
+      padding: 0 20px;
+    }
+
+    h1 {
+      text-align: center;
+      font-size: 28px;
+      margin-bottom: 40px;
+    }
+
+    .cards {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+      gap: 20px;
+    }
+
+    .card {
+      background-color: #1e293b;
+      border-radius: 12px;
+      padding: 20px;
+      text-align: center;
+      box-shadow: 0 5px 10px rgba(0, 0, 0, 0.3);
+    }
+
+    .card-icon {
+      font-size: 30px;
+      margin-bottom: 10px;
+    }
+
+    .card-title {
+      font-weight: 600;
+      margin-bottom: 10px;
+    }
+
+    .card-value {
+      font-size: 22px;
+      font-weight: bold;
+    }
+
+    .green { color: #4ade80; }
+    .blue { color: #60a5fa; }
+    .yellow { color: #facc15; }
+    .purple { color: #c084fc; }
+    .cyan { color: #22d3ee; }
+
+    .manage-section {
+      display: flex;
+      justify-content: space-between;
+      margin-top: 40px;
+    }
+
+    .manage-card {
+      background-color: #1e293b;
+      border-radius: 12px;
+      padding: 20px;
+      text-align: center;
+      flex: 1;
+      box-shadow: 0 5px 10px rgba(0, 0, 0, 0.3);
+      margin: 0 10px;
+    }
+
+    .manage-card h3 {
+      margin-bottom: 15px;
+      font-size: 24px;
+    }
+
+    .button {
+      background-color: #38bdf8;
+      padding: 10px 20px;
+      color: white;
+      border: none;
+      border-radius: 5px;
+      cursor: pointer;
+    }
+
+    @media screen and (max-width: 600px) {
+      h1 { font-size: 24px; }
+      .card-value { font-size: 18px; }
+      .manage-section { flex-direction: column; }
+      .manage-card { margin: 10px 0; }
+    }
+
+    /* Modal Styles */
+    .modal {
+      display: none;
+      position: fixed;
+      z-index: 1000;
+      left: 0;
+      top: 0;
+      width: 100%;
+      height: 100%;
+      overflow: auto;
+      background-color: rgba(0,0,0,0.6);
+    }
+
+    .modal-content {
+      background-color: #1e293b;
+      margin: 10% auto;
+      padding: 20px;
+      border-radius: 10px;
+      width: 90%;
+      max-width: 400px;
+      color: white;
+    }
+
+    .close {
+      float: right;
+      font-size: 28px;
+      font-weight: bold;
+      cursor: pointer;
+    }
+
+    .modal-content input {
+      width: 100%;
+      padding: 10px;
+      margin-top: 10px;
+      border-radius: 5px;
+      border: none;
+    }
+
+    .modal-content ul {
+      list-style-type: none;
+      padding: 0;
+    }
+
+    .modal-content li {
+      padding: 8px 0;
+      border-bottom: 1px solid #334155;
+    }
+
+    .election-list {
+      margin-bottom: 20px;
+      padding: 10px;
+      background: rgba(255, 255, 255, 0.1);
+      border-radius: 5px;
+    }
+    .election-list ul {
+      list-style: none;
+      padding: 0;
+    }
+    .election-list li {
+      margin: 10px 0;
+      padding: 10px;
+      background: rgba(0, 0, 0, 0.2);
+      border-radius: 5px;
+    }
+    .active { color: #4ade80; }
+    .upcoming { color: #facc15; }
+    .ended { color: #ef4444; }
+  </style>
+</head>
+<body>
+
+  <header>
+    <div class="nav-links">
+      <a href="#">🏠 Home</a>
+      <a href="admingmanage.html">📊 Manage Candidates</a>
+    </div>
+    <button class="logout-btn">🔒 Log Out</button>
+  </header>
+
+  <div class="dashboard">
+    <h1>🔑 Admin Dashboard</h1>
+
+    <div class="cards">
+      <div class="card">
+        <div class="card-icon">📊</div>
+        <div class="card-title">Total Voters</div>
+        <div class="card-value cyan" id="totalVoters">200</div>
+      </div>
+      <div class="card">
+        <div class="card-icon">📅</div>
+        <div class="card-title">Election Status</div>
+        <div class="card-value yellow">Ongoing</div>
+      </div>
+      <div class="card">
+        <div class="card-icon">🔒</div>
+        <div class="card-title">Active Elections</div>
+        <div class="card-value green">5</div>
+      </div>
+      <div class="card">
+        <div class="card-icon">📈</div>
+        <div class="card-title">Total Votes Cast</div>
+        <div class="card-value purple" id="totalVotesCast">1200</div>
+      </div>
+    </div>
+
+    <div class="manage-section">
+      <div class="manage-card">
+        <h3>Manage Elections</h3>
+        <button class="button" onclick="electionModal.style.display='block'">Create New Election</button>
+      </div>
+      <div class="manage-card">
+        <h3>Voter Management</h3>
+        <button class="button" onclick="voterModal.style.display='block'" id="viewVotersBtn">View Voters</button>
+      </div>
+      <div class="manage-card">
+        <h3>View Results</h3>
+        <button class="button" onclick="resultsModal.style.display='block'" id="viewResultsBtn">See Election Results</button>
+      </div>
+    </div>
+  </div>
+
+  <div id="endedElectionWinner" class="dashboard" style="text-align: center; margin-top: 20px; font-size: 20px;">
+    <!-- Winner of ended election will be displayed here -->
+  </div>
+
+<div id="electionModal" class="modal">
+  <div class="modal-content">
+    <span class="close" onclick="electionModal.style.display='none'">&times;</span>
+    <h2>Create New Election</h2>
+    <form id="electionForm">
+      <input type="text" id="electionName" placeholder="Election Name" required />
+      
+      <!-- Start Date and Time -->
+      <div class="date-field">
+        <label for="startDate">Start Date and Time:</label>
+        <input type="date" id="startDate" required />
+        <input type="time" id="startTime" required />
+      </div>
+
+      <!-- End Date and Time -->
+      <div class="date-field">
+        <label for="endDate">End Date and Time:</label>
+        <input type="date" id="endDate" required />
+        <input type="time" id="endTime" required />
+      </div>
+      
+      <button type="submit" class="button" style="margin-top: 10px;">Create</button>
+    </form>
+  </div>
+</div>
+
+  
+
+  <!-- Voter Management Modal -->
+  <div id="voterModal" class="modal">
+    <div class="modal-content">
+      <span class="close" onclick="voterModal.style.display='none'">&times;</span>
+      <h2>Voter Management</h2>
+      <ul id="voterList">
+        <!-- Voter list will be dynamically populated -->
+      </ul>
+    </div>
+  </div>
+
+  <!-- Results Modal -->
+  <div id="resultsModal" class="modal">
+    <div class="modal-content">
+      <span class="close" onclick="resultsModal.style.display='none'">&times;</span>
+      <h2>Election Results</h2>
+      <ul id="resultsList">
+        <!-- Results list will be dynamically populated -->
+      </ul>
+    </div>
+  </div>
+
+  <script type="module">
+    import { supabase } from './supabase-config.js';
+
+    const totalVotersElement = document.getElementById('totalVoters');
+    const totalVotesCastElement = document.getElementById('totalVotesCast');
+    const voterModal = document.getElementById("voterModal");
+    const resultsModal = document.getElementById("resultsModal");
+    const voterList = document.getElementById("voterList");
+    const resultsList = document.getElementById("resultsList");
+    const logoutButton = document.querySelector('.logout-btn');
+    const viewVotersBtn = document.getElementById('viewVotersBtn');
+    const viewResultsBtn = document.getElementById('viewResultsBtn');
+    const electionModal = document.getElementById("electionModal");
+    const electionForm = document.getElementById("electionForm");
+
+    // Function to fetch and display total voters
+    async function fetchTotalVoters() {
+      console.log('Fetching total voters...');
+      const { count, error } = await supabase
+        .from('profiles')
+        .select('*', { count: 'exact', head: true });
+
+      if (error) {
+        console.error('Error fetching total voters:', error);
+        totalVotersElement.textContent = 'Error';
+      } else {
+        totalVotersElement.textContent = count;
+      }
+    }
+
+    // Function to fetch and display total votes cast
+    async function fetchTotalVotes() {
+      const { count, error } = await supabase
+        .from('votes')
+        .select('*', { count: 'exact', head: true });
+
+      if (error) {
+        console.error('Error fetching total votes:', error);
+        totalVotesCastElement.textContent = 'Error';
+      } else {
+        totalVotesCastElement.textContent = count;
+      }
+    }
+
+    // Function to fetch and display voter list in the modal
+    async function fetchAndDisplayVoterList() {
+        console.log('Fetching voter list...');
+        const { data, error } = await supabase
+            .from('profiles')
+            .select('full_name')
+            .order('full_name', { ascending: true });
+
+        if (error) {
+            console.error('Error fetching voter list:', error);
+            voterList.innerHTML = '<li>Error loading voters.</li>';
+            return;
+        }
+
+        voterList.innerHTML = ''; // Clear existing list items
+        if (!data || data.length === 0) {
+            voterList.innerHTML = '<li>No voters found.</li>';
+            return;
+        }
+
+        data.forEach(profile => {
+            const listItem = document.createElement('li');
+            listItem.textContent = `🧑 ${profile.full_name} - Registered`;
+            voterList.appendChild(listItem);
+        });
+    }
+
+    // Function to fetch and display election results in the modal
+    async function fetchAndDisplayResults() {
+        console.log('Fetching election results...');
+
+        // First, check if any elections exist
+        const { data: electionsData, error: electionsError } = await supabase
+            .from('elections')
+            .select('id');
+
+        if (electionsError) {
+            console.error('Error checking for elections:', electionsError);
+            resultsList.innerHTML = '<li>Error checking election status.</li>';
+            return;
+        }
+
+        if (!electionsData || electionsData.length === 0) {
+            // No elections exist, display a message and return
+            resultsList.innerHTML = '<li>No elections have been set up yet.</li>';
+            return;
+        }
+
+        // If elections exist, proceed to fetch and display candidate results
+        const { data: candidatesData, error: candidatesError } = await supabase
+            .from('candidates')
+            .select('name, position, votes')
+            .order('votes', { ascending: false }); // Order by votes
+
+        if (candidatesError) {
+            console.error('Error fetching election results:', candidatesError);
+            resultsList.innerHTML = '<li>Error loading results.</li>';
+            return;
+        }
+
+        resultsList.innerHTML = ''; // Clear existing list items
+        if (!candidatesData || candidatesData.length === 0) {
+            resultsList.innerHTML = '<li>No results available.</li>';
+            return;
+        }
+
+        // Display each candidate's results
+        candidatesData.forEach(candidate => {
+            const listItem = document.createElement('li');
+            listItem.textContent = `🗳️ ${candidate.name} (${candidate.position}) - ${candidate.votes || 0} votes`;
+            resultsList.appendChild(listItem);
+        });
+
+        // Determine the winner(s)
+        let winnerText = '';
+        if (candidatesData.length > 0) {
+            const maxVotes = candidatesData[0].votes || 0;
+            const winners = candidatesData.filter(candidate => (candidate.votes || 0) === maxVotes);
+
+            if (maxVotes === 0) {
+                winnerText = '<h3>No votes cast yet.</h3>';
+            } else if (winners.length > 1) {
+                // Handle ties
+                const winnerNames = winners.map(winner => `${winner.name} (${winner.position})`).join(', ');
+                winnerText = `<h3>🏆 Tie between: ${winnerNames} with ${maxVotes} votes!</h3>`;
+            } else {
+                // Single winner
+                const winner = winners[0];
+                winnerText = `<h3>👑 Winner: ${winner.name} (${winner.position}) with ${winner.votes || 0} votes!</h3>`;
+            }
+        }
+
+        // Add the winner text to the results list
+        const winnerElement = document.createElement('div');
+        winnerElement.innerHTML = winnerText;
+        resultsList.insertBefore(winnerElement, resultsList.firstChild); // Add at the top
+    }
+
+    // Function to fetch and display existing elections
+    async function fetchAndDisplayElections() {
+        console.log('Fetching existing elections...');
+        const { data, error } = await supabase
+            .from('elections')
+            .select('*')
+            .order('created_at', { ascending: false });
+
+        if (error) {
+            console.error('Error fetching elections:', error);
+            return;
+        }
+
+        // Update the election status card
+        const activeElections = data.filter(election => {
+            const nowUtc = new Date().getTime(); // Get current time in milliseconds since epoch (UTC)
+            const startDateUtc = new Date(election.start_date).getTime();
+            const endDateUtc = new Date(election.end_date).getTime();
+            return nowUtc >= startDateUtc && nowUtc <= endDateUtc;
+        });
+
+        document.querySelector('.card-value.green').textContent = activeElections.length;
+
+        // Update the election modal content
+        const electionListContainer = electionModal.querySelector('.election-list');
+        if (electionListContainer) {
+            electionListContainer.remove();
+        }
+
+        const electionList = document.createElement('div');
+        electionList.className = 'election-list';
+        electionList.innerHTML = '<h3>Existing Elections</h3>';
+        
+        if (data.length === 0) {
+            electionList.innerHTML += '<p>No elections created yet.</p>';
+        } else {
+            const list = document.createElement('ul');
+            data.forEach(election => {
+                const listItem = document.createElement('li');
+                const nowUtc = new Date().getTime();
+                const endDateUtc = new Date(election.end_date).getTime();
+                const startDateUtc = new Date(election.start_date).getTime();
+
+                const status = nowUtc > endDateUtc ? 'Ended' :
+                             nowUtc < startDateUtc ? 'Upcoming' : 'Active';
+                listItem.innerHTML = `
+                    <strong>${election.name}</strong><br>
+                    Start: ${new Date(election.start_date).toLocaleDateString()}<br>
+                    End: ${new Date(election.end_date).toLocaleDateString()}<br>
+                    Status: <span class="${status.toLowerCase()}">${status}</span>
+                `;
+                list.appendChild(listItem);
+            });
+            electionList.appendChild(list);
+        }
+
+        // Insert the election list before the form
+        electionModal.querySelector('.modal-content').insertBefore(
+            electionList,
+            electionForm
+        );
+
+        // Update the main election status card
+        const electionStatusCard = document.querySelector('.card-value.yellow');
+        if (activeElections.length > 0) {
+            electionStatusCard.textContent = 'Ongoing';
+        } else if (data.length > 0) {
+             // If there are elections but none are active
+             const nowUtc = new Date().getTime(); // Get current time in milliseconds since epoch (UTC)
+             const allEnded = data.every(election => new Date(election.end_date).getTime() < nowUtc);
+             if (allEnded) {
+                 electionStatusCard.textContent = 'Completed';
+             } else {
+                 electionStatusCard.textContent = 'Closed'; // Or perhaps 'Inactive'? Let's use Closed for now.
+             }
+        }
+         else {
+            electionStatusCard.textContent = 'Closed';
+        }
+
+        // Find the most recently ended election and display the winner
+        const endedElectionWinnerElement = document.getElementById('endedElectionWinner');
+        endedElectionWinnerElement.innerHTML = ''; // Clear previous winner display
+
+        const nowUtc = new Date().getTime(); // Get current time in milliseconds since epoch (UTC)
+        let latestEndedElection = null;
+
+        data.forEach(election => {
+            const endDateUtc = new Date(election.end_date).getTime();
+            if (endDateUtc < nowUtc) {
+                // This election has ended
+                if (!latestEndedElection || endDateUtc > new Date(latestEndedElection.end_date).getTime()) {
+                    latestEndedElection = election;
+                }
+            }
+        });
+
+        if (latestEndedElection) {
+            console.log('Fetching results for ended election:', latestEndedElection.name);
+            // Fetch candidates and determine winner for this ended election
+            // NOTE: This assumes the candidates table currently holds data for the latest ended election.
+            // A more robust solution would link candidates/votes to elections via election_id.
+            const { data: candidatesData, error: candidatesError } = await supabase
+                .from('candidates')
+                .select('name, position, votes')
+                .order('votes', { ascending: false }); // Order by votes
+
+            if (candidatesError) {
+                console.error('Error fetching candidates for ended election:', candidatesError);
+                endedElectionWinnerElement.innerHTML = 'Error loading ended election results.';
+                return;
+            }
+
+            if (!candidatesData || candidatesData.length === 0) {
+                endedElectionWinnerElement.innerHTML = `No results available for ${latestEndedElection.name}.`;
+                return;
+            }
+
+            // Determine the winner(s)
+            let winnerText = '';
+            if (candidatesData.length > 0) {
+                const maxVotes = candidatesData[0].votes || 0;
+                const winners = candidatesData.filter(candidate => (candidate.votes || 0) === maxVotes);
+
+                if (maxVotes === 0) {
+                    winnerText = `<h3>${latestEndedElection.name} - No votes cast.</h3>`;
+                } else if (winners.length > 1) {
+                    // Handle ties
+                    const winnerNames = winners.map(winner => `${winner.name} (${winner.position})`).join(', ');
+                    winnerText = `<h3>🏆 ${latestEndedElection.name} - Tie between: ${winnerNames} with ${maxVotes} votes!</h3>`;
+                } else {
+                    // Single winner
+                    const winner = winners[0];
+                    winnerText = `<h3>👑 ${latestEndedElection.name} - Winner: ${winner.name} (${winner.position}) with ${winner.votes || 0} votes!</h3>`;
+                }
+            }
+
+            endedElectionWinnerElement.innerHTML = winnerText;
+        } else {
+            // No ended election found
+            endedElectionWinnerElement.innerHTML = ''; // Ensure the div is empty
+        }
+    }
+
+    // Check for authenticated user and initialize
+    async function initAdminDashboard() {
+      const { data: { session } } = await supabase.auth.getSession();
+
+      if (!session) {
+        // If no session, redirect to login page
+        window.location.href = 'index.html'; // Adjust if your login page is different
+      } else {
+        // If authenticated, fetch initial data
+        fetchTotalVoters();
+        fetchTotalVotes();
+        fetchAndDisplayElections();
+        // Note: fetchAndDisplayVoterList and fetchAndDisplayResults are called when modals are opened
+      }
+    }
+
+    // Set up real-time subscription for new votes count
+    function setupVotesRealtimeSubscription() {
+      supabase
+        .channel('total-votes')
+        .on(
+          'postgres_changes',
+          { event: 'INSERT', schema: 'public', table: 'votes' },
+          (payload) => {
+            console.log('New vote received!', payload);
+            // When a new vote is inserted, re-fetch the total count
+            fetchTotalVotes();
+          }
+        )
+        .subscribe();
+    }
+
+     // Set up real-time subscription for results (candidate vote counts)
+     function setupResultsRealtimeSubscription() {
+       supabase
+         .channel('candidate-votes') // Use a distinct channel name
+         .on(
+           'postgres_changes',
+           { event: 'UPDATE', schema: 'public', table: 'candidates' }, // Listen for UPDATEs on candidates
+           (payload) => {
+             console.log('Candidate updated!', payload);
+             // When a candidate's votes update, re-fetch and display results if the modal is open
+             if (resultsModal.style.display === 'block') {
+               fetchAndDisplayResults();
+             }
+           }
+         )
+         .subscribe();
+     }
+
+    // Function to set the current time in the time input fields
+    function setCurrentTime() {
+      const now = new Date();
+      const hours = String(now.getHours()).padStart(2, '0');
+      const minutes = String(now.getMinutes()).padStart(2, '0');
+      const currentTime = `${hours}:${minutes}`;
+
+      const startTimeInput = document.getElementById('startTime');
+      const endTimeInput = document.getElementById('endTime');
+
+      if (startTimeInput) {
+        startTimeInput.value = currentTime;
+      }
+      if (endTimeInput) {
+        endTimeInput.value = currentTime;
+      }
+    }
+
+    // Initialize dashboard data and real-time subscriptions on page load
+    document.addEventListener('DOMContentLoaded', () => {
+        initAdminDashboard(); // Fetches initial data
+        setupVotesRealtimeSubscription(); // Sets up subscription for total votes
+        setupResultsRealtimeSubscription(); // Sets up subscription for candidate results
+        setCurrentTime(); // Set initial time
+        // Update time every minute
+        setInterval(setCurrentTime, 60000);
+    });
+
+    // Set up event listeners for modal buttons
+    viewVotersBtn.addEventListener('click', async () => {
+        await fetchAndDisplayVoterList();
+        voterModal.style.display = 'block';
+    });
+
+    viewResultsBtn.addEventListener('click', async () => {
+        await fetchAndDisplayResults(); // Fetch results when opening modal
+        resultsModal.style.display = 'block';
+    });
+
+    // Set up election form submission
+    electionForm.addEventListener('submit', async function(e) {
+      e.preventDefault();
+      const name = document.getElementById("electionName").value;
+      const startDate = document.getElementById("startDate").value;
+      const endDate = document.getElementById("endDate").value;
+      const startTime = document.getElementById("startTime").value;
+      const endTime = document.getElementById("endTime").value;
+
+      // Combine date and time to create timestamp strings (ISO 8601 format)
+      const startTimestamp = `${startDate}T${startTime}:00Z`; // Assuming time input is HH:MM
+      const endTimestamp = `${endDate}T${endTime}:00Z`; // Assuming time input is HH:MM
+
+      // Insert election data into Supabase
+      console.log('Attempting to create new election:', { name, startTimestamp, endTimestamp });
+      const { data, error } = await supabase
+        .from('elections') // Target the new 'elections' table
+        .insert([
+          { name: name, start_date: startTimestamp, end_date: endTimestamp }
+        ]);
+
+      if (error) {
+        console.error('Error creating election:', error);
+        alert('Failed to create election: ' + error.message);
+      } else {
+        console.log('Election created successfully:', data);
+        alert(`Election '${name}' created successfully!`);
+        fetchAndDisplayElections(); // Refresh the election list after creating a new one
+      }
+
+      electionModal.style.display = "none";
+      electionForm.reset();
+    });
+
+    // Set up logout button event listener
+    logoutButton.addEventListener('click', async () => {
+        const { error } = await supabase.auth.signOut();
+        if (error) {
+            console.error('Error signing out:', error.message);
+            alert('Error signing out: ' + error.message);
+        } else {
+            window.location.href = 'login.html'; // Redirect to login page
+        }
+    });
+
+    // Close modals when clicking outside of them
+    window.onclick = function(event) {
+        if (event.target == voterModal) {
+            voterModal.style.display = "none";
+        }
+        if (event.target == resultsModal) {
+            resultsModal.style.display = "none";
+        }
+        if (event.target == electionModal) {
+            electionModal.style.display = "none";
+        }
+    }
+
+    // Set current time when the election modal is opened
+    electionModal.addEventListener('click', (event) => {
+        if (event.target === electionModal) { // Check if the click is on the modal overlay
+            electionModal.style.display = "none";
+        } else if (event.target === electionModal.querySelector('.modal-content')) {
+            // Click is inside the modal, do nothing
+        } else {
+             setCurrentTime(); // Set time when the modal content itself is clicked/opened
+        }
+    });
+
+  </script>
+
+</body>
+</html>

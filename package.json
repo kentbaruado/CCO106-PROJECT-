@@ -1,0 +1,21 @@
+{
+  "name": "voting-system",
+  "version": "1.0.0",
+  "description": "Voting system with Supabase backend",
+  "main": "index.js",
+  "type": "module",
+  "scripts": {
+    "start": "serve .",
+    "dev": "serve . --cors",
+    "lint": "eslint .",
+    "format": "prettier --write ."
+  },
+  "dependencies": {
+    "@supabase/supabase-js": "^2.39.0",
+    "serve": "^14.2.1"
+  },
+  "devDependencies": {
+    "eslint": "^8.56.0",
+    "prettier": "^3.2.5"
+  }
+} 

@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Blockchain-Based Voting System</title>
+    
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: #0a0a23;
+            color: white;
+        }
+        .navbar {
+            display: flex;
+            justify-content: flex-end;
+            padding: 30px;
+            font-size: 22px;
+        }
+        .navbar a {
+            color: white;
+            margin: 0 20px;
+            text-decoration: none;
+            transition: color 0.3s ease, transform 0.3s ease;
+        }
+        .navbar a:hover {
+            color: #00bfff;
+            transform: scale(1.1);
+        }
+        .container {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            height: 80vh;
+            padding: 0 10%;
+        }
+        .title-section {
+            text-align: right;
+        }
+        .title {
+            font-size: 48px;
+            font-weight: bold;
+        }
+        .buttons {
+            margin-top: 20px;
+        }
+        .buttons button {
+            background-color: white;
+            color: black;
+            border: none;
+            padding: 10px 20px;
+            font-size: 18px;
+            margin: 10px;
+            cursor: pointer;
+            border-radius: 5px;
+        }
+        .buttons button:hover {
+            background-color: pink;
+        }
+        .image {
+            width: 600px;
+            animation: float 2s infinite ease-in-out;
+        }
+        @keyframes float {
+            0% { transform: translateY(0px); }
+            50% { transform: translateY(-30px); }
+            100% { transform: translateY(0px); }
+        }
+    </style>
+</head>
+<body>
+    <div class="navbar">
+        <a href="#">Home</a>
+        <a href="about.html">About</a>
+        <a href="contact.html">Contact</a>
+        <a href="#">Ohaha</a>
+    </div>
+    <div class="container">
+        <img src="ngi.png" alt="Blockchain Voting" class="image">
+        <div class="title-section">
+            <h1 class="title">Blockchain-Based Voting System</h1>
+            <div class="buttons">
+                    <button onclick="window.location.href='login.html'">Log in</button>
+                
+            </div>
+        </div>
+    </div>
+</body>
+</html>

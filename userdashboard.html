@@ -1,0 +1,352 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Election Dashboard</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <style>
+    body {
+  margin: 0;
+  font-family: 'Inter', sans-serif;
+  background: url('Chain.jpg') no-repeat center center fixed;
+  background-size: cover;
+  color: white;
+}
+    header {
+      background-color: #1e293b;
+      padding: 15px 40px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .nav-links {
+      display: flex;
+      gap: 25px;
+    }
+
+    .nav-links a {
+      text-decoration: none;
+      color: #38bdf8;
+      font-weight: 600;
+      display: flex;
+      align-items: center;
+      gap: 5px;
+    }
+
+    .logout-btn {
+      background-color: #f97316;
+      color: white;
+      border: none;
+      padding: 10px 18px;
+      border-radius: 10px;
+      cursor: pointer;
+      font-weight: 600;
+    }
+
+    .dashboard {
+      max-width: 1000px;
+      margin: 40px auto;
+      text-align: center;
+    }
+
+    .dashboard h1 {
+      font-size: 28px;
+      margin-bottom: 40px;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .cards {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+      gap: 20px;
+      justify-content: center;
+    }
+
+    .card {
+      background-color: #1e293b;
+      border-radius: 12px;
+      padding: 25px;
+      text-align: center;
+      box-shadow: 0 4px 6px rgba(0, 0, 0, 0.3);
+    }
+
+    .card h3 {
+      font-size: 14px;
+      font-weight: 600;
+      color: #e2e8f0;
+      margin-bottom: 10px;
+    }
+
+    .card .value {
+      font-size: 24px;
+      font-weight: 700;
+    }
+
+    .green { color: #22c55e; }
+    .blue { color: #3b82f6; }
+    .yellow { color: #facc15; }
+    .purple { color: #a855f7; }
+    .cyan { color: #06b6d4; }
+
+    .emoji {
+      margin-right: 5px;
+    }
+
+    .active-elections {
+      margin: 40px 0;
+      padding: 20px;
+      background: rgba(30, 41, 59, 0.8);
+      border-radius: 12px;
+    }
+
+    .active-elections h2 {
+      margin-bottom: 20px;
+      color: #38bdf8;
+    }
+
+    .elections-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+      gap: 20px;
+    }
+
+    .election-card {
+      background: rgba(255, 255, 255, 0.1);
+      padding: 20px;
+      border-radius: 10px;
+      transition: transform 0.2s;
+    }
+
+    .election-card:hover {
+      transform: translateY(-5px);
+    }
+
+    .election-card h3 {
+      color: #38bdf8;
+      margin-bottom: 10px;
+    }
+
+    .election-dates {
+      color: #94a3b8;
+      font-size: 0.9em;
+      margin-bottom: 15px;
+    }
+
+    .election-status {
+      display: inline-block;
+      padding: 5px 10px;
+      border-radius: 15px;
+      font-size: 0.8em;
+      font-weight: 600;
+    }
+
+    .status-active {
+      background: #4ade80;
+      color: #064e3b;
+    }
+
+    .status-upcoming {
+      background: #facc15;
+      color: #854d0e;
+    }
+  </style>
+</head>
+<body>
+
+  <header>
+    <div class="nav-links">
+      <a href="uservote.html"><span class="emoji">🏠</span> Home</a>
+      <a href="userdashboard.html"><span class="emoji">📊</span> Dashboard</a>
+      <a href="#"><span class="emoji">🗳️</span> Vote</a>
+    </div>
+    <button class="logout-btn">🔒 Log Out</button>
+  </header>
+  <div class="dashboard">
+    <h1>👋 Welcome to the Voting System</h1>
+    
+    <div class="active-elections" id="activeElectionsSection">
+      <h2>Active Elections</h2>
+      <div id="electionsList" class="elections-grid">
+        <!-- Elections or no election message will be displayed here -->
+        <p id="noElectionsMessage" style="text-align: center; font-size: 1.1em; display: none;">No active election at the moment.</p>
+      </div>
+    </div>
+
+    <div class="quick-actions" id="quickActionsSection">
+      <a href="uservote.html" class="action-card">
+        <div class="card-icon">🗳️</div>
+        <div class="card-title">Cast Your Vote</div>
+        <div class="card-description">Participate in ongoing elections</div>
+      </a>
+      <a href="userviewresult.html" class="action-card">
+        <div class="card-icon">📊</div>
+        <div class="card-title">View Results</div>
+        <div class="card-description">Check current election results</div>
+      </a>
+    </div>
+  </div>
+
+</body>
+<script type="module">
+  // Initialize Supabase client
+  import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm'
+  const supabaseUrl = "https://ovteiceidxxurslhypqp.supabase.co" // Replace with your actual Supabase URL
+  const supabaseAnonKey = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im92dGVpY2VpZHh4dXJzbGh5cHFwIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDc4MzQ2ODcsImV4cCI6MjA2MzQxMDY4N30.m9hzZxkBM_8IBWgbkgXh7puCNTVmDe-v_AA3vP_R1ws" // Replace with your actual Supabase Anon Key
+  const supabase = createClient(supabaseUrl, supabaseAnonKey);
+
+  // Function to fetch and display active elections (by checking for candidates)
+  async function checkAndDisplayElectionStatus() {
+    try {
+      console.log('Checking for active elections...');
+      
+      // Fetch elections from the 'elections' table
+      const { data: elections, error: fetchError } = await supabase
+        .from('elections')
+        .select('*'); // Fetch all election details
+
+      const activeElectionsSection = document.getElementById('activeElectionsSection');
+      const electionsList = document.getElementById('electionsList');
+      const noElectionsMessage = document.getElementById('noElectionsMessage');
+      const quickActionsSection = document.getElementById('quickActionsSection');
+
+      if (fetchError) {
+        console.error('Error fetching elections:', fetchError);
+        electionsList.innerHTML = ''; // Clear any previous list
+        quickActionsSection.style.display = 'none';
+        noElectionsMessage.textContent = 'Error loading election status.';
+        noElectionsMessage.style.display = 'block';
+        activeElectionsSection.style.display = 'block'; // Keep section visible to show message
+        return;
+      }
+
+      const now = new Date();
+      const activeElections = elections.filter(election => {
+          const startDate = new Date(election.start_date);
+          const endDate = new Date(election.end_date);
+          // Check if the current time is between the start and end times (inclusive)
+          return now >= startDate && now <= endDate;
+      });
+
+      if (!activeElections || activeElections.length === 0) {
+        console.log('No active election found based on dates.');
+        // Hide election list and quick actions, show no elections message
+        electionsList.innerHTML = ''; // Clear any previous list
+        electionsList.style.display = 'none';
+        quickActionsSection.style.display = 'none';
+        noElectionsMessage.textContent = 'No active election at the moment.';
+        noElectionsMessage.style.display = 'block';
+        activeElectionsSection.style.display = 'block'; // Keep section visible to show message
+      } else {
+        console.log(`${activeElections.length} active election(s) found.`);
+        // Display active elections
+        electionsList.innerHTML = ''; // Clear existing list items
+        activeElections.forEach(election => {
+          const electionCard = document.createElement('div');
+          electionCard.className = 'election-card';
+          // You might want to add a link or button here to navigate to the voting page for this election
+          electionCard.innerHTML = `
+            <h3>${election.name}</h3>
+            <p class="election-dates">Start: ${new Date(election.start_date).toLocaleDateString()}<br>End: ${new Date(election.end_date).toLocaleDateString()}</p>
+            <span class="election-status status-active">Active</span>
+          `;
+          electionsList.appendChild(electionCard);
+        });
+
+        // Show election list and quick actions, hide no elections message
+        activeElectionsSection.style.display = 'block';
+        electionsList.style.display = 'grid'; // Display as grid
+        quickActionsSection.style.display = 'grid'; // Display as grid
+        noElectionsMessage.style.display = 'none';
+      }
+
+    } catch (err) {
+      console.error('Unexpected error checking election status:', err);
+      document.getElementById('electionsList').innerHTML = ''; // Clear any previous list
+      document.getElementById('electionsList').style.display = 'none';
+      document.getElementById('quickActionsSection').style.display = 'none';
+      const noElectionsMessage = document.getElementById('noElectionsMessage');
+      noElectionsMessage.textContent = 'Error loading election status.';
+      noElectionsMessage.style.display = 'block';
+      document.getElementById('activeElectionsSection').style.display = 'block'; // Keep section visible to show message
+    }
+  }
+
+  // Optional: Add a function to fetch and display actual election details if needed
+  // async function fetchAndDisplayActualElectionDetails() {
+  //   // This function would fetch details for active elections and populate the electionsList div
+  //   // For now, checkAndDisplayElectionStatus directly populates the list
+  // }
+
+  // Logout functionality
+  document.querySelector('.logout-btn').addEventListener('click', async () => {
+      const { error } = await supabase.auth.signOut();
+      if (error) {
+          console.error('Error signing out:', error.message);
+          alert('Error signing out: ' + error.message);
+      } else {
+          window.location.href = 'login.html'; // Redirect to login page
+      }
+  });
+
+  // Initialize the page
+  document.addEventListener('DOMContentLoaded', async () => {
+    // Attempt to get user session (may fail if not logged in or due to permissions)
+    const { data: { user }, error: userError } = await supabase.auth.getUser();
+    
+    if (userError) {
+      console.error('Error fetching user status:', userError);
+      // Continue to attempt fetching elections even if user status check fails
+    }
+
+    if (user) {
+      console.log('User is logged in:', user);
+    } else {
+      console.log('No user logged in or error fetching user.');
+    }
+
+    // Always attempt to display elections, regardless of login status check result
+    checkAndDisplayElectionStatus();
+    
+    // Set up real-time subscription for elections
+    const electionSubscription = supabase
+      .channel('elections_changes')
+      .on('postgres_changes', 
+        { 
+          event: '*', 
+          schema: 'public', 
+          table: 'elections' 
+        }, 
+        payload => {
+          console.log('Election change received!', payload);
+          checkAndDisplayElectionStatus(); // Re-fetch elections on any change
+        }
+      )
+      .subscribe();
+
+    // Set up real-time subscription for candidates
+    const candidatesSubscription = supabase
+      .channel('candidates_changes')
+      .on('postgres_changes', 
+        { 
+          event: '*', 
+          schema: 'public', 
+          table: 'candidates' 
+        }, 
+        payload => {
+          console.log('Candidate change received!', payload);
+          checkAndDisplayElectionStatus(); // Re-fetch to update candidate counts
+        }
+      )
+      .subscribe();
+
+    // Note: If elections still don't appear, please check your Supabase RLS policies
+    // for the 'elections' table to ensure anonymous users have SELECT permissions.
+  });
+</script>
+</html>

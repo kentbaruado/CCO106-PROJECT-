@@ -1,0 +1,176 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Election Candidates</title>
+  <style>
+    body {
+  font-family: Arial, sans-serif;
+  background: url("Chain.jpg") no-repeat center center fixed;
+  background-size: cover;
+  margin: 0;
+  color: white;
+}
+
+
+    header {
+      background-color: #1a1a1a;
+      padding: 15px;
+      display: flex;
+      justify-content: center;
+      gap: 40px;
+      font-size: 18px;
+    }
+
+    header a {
+  color: #00bfff;
+  text-decoration: none;
+  padding: 5px 10px;
+  border-radius: 5px;
+  transition: background 0.3s ease;
+}
+
+header a:hover {
+  background-color: #0a0a23;
+  color: white;
+}
+
+
+    .container {
+      max-width: 900px;
+      margin: 40px auto;
+      text-align: center;
+    }
+
+    input[type="text"] {
+      padding: 10px;
+      width: 60%;
+      border-radius: 20px;
+      border: none;
+      margin-bottom: 30px;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      background-color: #0a0a23;
+      border-radius: 10px;
+      overflow: hidden;
+    }
+
+    th, td {
+      padding: 15px;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+    }
+
+    th {
+      background-color: rgba(255, 255, 255, 0.2);
+    }
+
+    .vote-btn {
+      background-color: #28a745;
+      border: none;
+      border-radius: 20px;
+      padding: 10px 20px;
+      color: white;
+      cursor: pointer;
+    }
+
+    .footer-buttons {
+      margin-top: 20px;
+    }
+
+    .footer-buttons button {
+      background-color: #ff6600;
+      border: none;
+      padding: 10px 20px;
+      color: white;
+      border-radius: 20px;
+      margin: 5px;
+      cursor: pointer;
+    }
+
+    .voted-row {
+      background-color: rgba(40, 167, 69, 0.3); /* Subtle green background */
+      font-weight: bold;
+    }
+
+    .hidden {
+      display: none;
+    }
+  </style>
+</head>
+<body>
+
+  <header>
+    <a href="uservote.html">🏠 Home</a>
+    <a href="userdashboard.html">📊 Dashboard</a>
+    <a href="#">📦 Vote</a>
+  </header>
+
+  <div class="container">
+    <div id="electionContent" class="hidden">
+      <input type="text" id="search" placeholder="🔍 Search Candidate..." onkeyup="searchCandidate()"/>
+      <h2 id="electionCandidatesHeading">Election Candidates</h2>
+
+      <div id="votedCandidateDisplay" style="text-align: center; margin-bottom: 20px; font-size: 1.2em; color: #4ade80;"></div>
+
+      <table id="candidateTable">
+        <thead>
+          <tr>
+            <th>Name</th>
+            <th>Position</th>
+            <th>Votes</th>
+            <th>Action</th>
+          </tr>
+        </thead>
+        <tbody>
+          <!-- Table content will be dynamically populated -->
+        </tbody>
+      </table>
+    </div>
+
+    <div id="noElectionMessage" style="text-align: center; margin-top: 50px; font-size: 1.5em; color: #facc15; font-weight: bold;">
+      No active election at the moment.
+    </div>
+
+    <div class="footer-buttons">
+      <button onclick="window.location.href='userviewresult.html'">📊 View Results</button>
+      <button onclick="window.location.href='login.html'">🔒 Log Out</button>
+    </div>
+  </div>
+
+  <script type="module" src="voting.js"></script>
+  <script>
+    function searchCandidate() {
+      const input = document.getElementById("search");
+      const filter = input.value.toLowerCase();
+      const table = document.getElementById("candidateTable");
+      const tr = table.getElementsByTagName("tr");
+
+      for (let i = 1; i < tr.length; i++) {
+        const td = tr[i].getElementsByTagName("td")[0];
+        if (td) {
+          const txtValue = td.textContent || td.innerText;
+          tr[i].style.display = txtValue.toLowerCase().indexOf(filter) > -1 ? "" : "none";
+        }
+      }
+    }
+  </script>
+  <script type="module">
+    import { supabase } from './supabase-config.js'; // Adjust the path if necessary
+
+    document.querySelector('.footer-buttons button:last-child').addEventListener('click', async () => {
+        const { error } = await supabase.auth.signOut();
+        if (error) {
+            console.error('Error signing out:', error.message);
+            alert('Error signing out: ' + error.message);
+        } else {
+            window.location.href = 'login.html'; // Redirect to login page
+        }
+    });
+  </script>
+
+</body>
+</html>
